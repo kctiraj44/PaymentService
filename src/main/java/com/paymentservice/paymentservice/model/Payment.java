@@ -21,5 +21,6 @@ public class Payment {
     private String cardNumber;
     private BigDecimal amount;
     private LocalDateTime timestamp;
+    private String name;
 
 }
