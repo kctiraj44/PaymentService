@@ -1,7 +1,9 @@
 package com.paymentservice.paymentservice.controller;
 
 
+import com.paymentservice.paymentservice.dto.PaymentDetailDTO;
 import com.paymentservice.paymentservice.dto.PaymentResponse;
+import com.paymentservice.paymentservice.exception.ResourceNotFoundException;
 import com.paymentservice.paymentservice.model.Payment;
 import com.paymentservice.paymentservice.service.PaymentService;
 import org.slf4j.Logger;
@@ -11,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/payments")
@@ -22,7 +25,7 @@ public class PaymentController {
     @Autowired
     private PaymentService paymentService;
 
-    @PostMapping
+    @PostMapping("/createPayemnt")
     public ResponseEntity<PaymentResponse<Payment>> acceptPayment(@RequestBody Payment payment) {
         log.info("Received request to accept payment for card number: {}", payment.getCardNumber());
         Payment processedPayment = paymentService.acceptPayment(payment);
@@ -30,7 +33,7 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<PaymentResponse<Object>> stopPayment(@PathVariable Long id) {
         log.info("Received request to stop payment with ID: {}", id);
         boolean result = paymentService.stopPayment(id);
@@ -49,6 +52,23 @@ public class PaymentController {
             return ResponseEntity.ok(new PaymentResponse<>(payments, "Payments retrieved successfully."));
         } else {
             return ResponseEntity.ok(new PaymentResponse<>(payments, "No payments found for the provided card number."));
+        }
+    }
+
+    @GetMapping("/active/{cardNumber}")
+    public ResponseEntity<PaymentResponse<List<PaymentDetailDTO>>> getActivePaymentsByCardNumber(@PathVariable String cardNumber) {
+        try {
+            List<Payment> payments = paymentService.getActivePaymentsByCardNumber(cardNumber);
+            List<PaymentDetailDTO> paymentDetailDTOs = payments.stream()
+                    .map(payment -> new PaymentDetailDTO(payment.getId(), payment.getCardNumber(), payment.getAmount(), payment.getTimestamp()))
+                    .collect(Collectors.toList());
+
+            PaymentResponse<List<PaymentDetailDTO>> response = new PaymentResponse<>(paymentDetailDTOs, "Active payments retrieved successfully");
+
+            return ResponseEntity.ok(response);
+        } catch (ResourceNotFoundException e) {
+            log.error("Error fetching active payments for card number {}: {}", cardNumber, e.getMessage());
+            return ResponseEntity.notFound().build();
         }
     }
 }

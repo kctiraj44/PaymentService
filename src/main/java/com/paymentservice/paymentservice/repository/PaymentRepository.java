@@ -7,4 +7,7 @@ import java.util.List;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Payment> findByCardNumber(String cardNumber);
+
+    List<Payment> findByCardNumberAndIsDeletedFalse(String cardNumber);
+
 }

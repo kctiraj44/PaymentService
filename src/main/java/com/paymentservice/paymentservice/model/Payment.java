@@ -22,5 +22,6 @@ public class Payment {
     private BigDecimal amount;
     private LocalDateTime timestamp;
     private String name;
+    private boolean isDeleted = false;
 
 }

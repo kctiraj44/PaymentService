@@ -47,7 +47,8 @@ public class PaymentService {
         }
 
         if (LocalDateTime.now().minusMinutes(15).isBefore(payment.getTimestamp())) {
-            paymentRepository.deleteById(paymentId);
+            payment.setDeleted(true); // Mark as deleted instead of physical deletion
+            paymentRepository.save(payment); // Save the updated payment
             return true;
         } else {
             throw new PaymentValidationException("Payment cannot be stopped after 15 minutes.");
@@ -62,4 +63,20 @@ public class PaymentService {
         }
         return payments;
     }
+
+
+
+    public List<Payment> getActivePaymentsByCardNumber(String cardNumber) {
+        log.debug("Retrieving active payments for card number: {}", cardNumber);
+        List<Payment> payments = paymentRepository.findByCardNumberAndIsDeletedFalse(cardNumber);
+
+        if (payments.isEmpty()) {
+            log.warn("No active payments found for card number: {}", cardNumber);
+            throw new ResourceNotFoundException("No active payments found for card number: " + cardNumber);
+        }
+        log.info("Successfully retrieved {} active payments for card number: {}", payments.size(), cardNumber);
+        return payments;
+    }
+
+
 }
