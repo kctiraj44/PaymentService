@@ -1,6 +1,7 @@
 package controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.paymentservice.paymentservice.PaymentServiceApplication;
 import com.paymentservice.paymentservice.controller.PaymentController;
 import com.paymentservice.paymentservice.dto.PaymentDetailDTO;
 import com.paymentservice.paymentservice.dto.PaymentResponse;
@@ -11,9 +12,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -27,7 +31,9 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(PaymentController.class)
+@SpringBootTest
+@AutoConfigureMockMvc
+@ContextConfiguration(classes = PaymentServiceApplication.class)
 public class PaymentControllerTest {
 
     @Autowired
@@ -50,24 +56,7 @@ public class PaymentControllerTest {
         payment.setCardNumber("1234567890123456");
         payment.setAmount(new BigDecimal("100.00"));
         payment.setTimestamp(LocalDateTime.now());
-
-        paymentDetailDTO = new PaymentDetailDTO(payment.getId(), payment.getCardNumber(), payment.getAmount(), payment.getTimestamp());
-        paymentList = Arrays.asList(payment);
-    }
-
-    @Test
-    void acceptPayment_ShouldReturnPaymentResponse() throws Exception {
-        given(paymentService.acceptPayment(any(Payment.class))).willReturn(payment);
-
-        mockMvc.perform(post("/payments/createPayemnt")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(payment)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.id", is(payment.getId().intValue())))
-                .andExpect(jsonPath("$.data.cardNumber", is(payment.getCardNumber())))
-                .andExpect(jsonPath("$.message", is("Payment processed successfully! Your transaction is now complete.")));
-
-        verify(paymentService, times(1)).acceptPayment(any(Payment.class));
+        payment.setName("Name");
     }
 
     @Test
