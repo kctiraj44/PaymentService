@@ -36,16 +36,21 @@ public class PaymentService {
 
     public boolean stopPayment(Long paymentId) {
         log.debug("Stopping payment with ID: {}", paymentId);
-        Optional<Payment> payment = paymentRepository.findById(paymentId);
-        if (!payment.isPresent()) {
+        Optional<Payment> paymentOpt = paymentRepository.findById(paymentId);
+        if (!paymentOpt.isPresent()) {
             throw new ResourceNotFoundException("Payment with ID " + paymentId + " not found.");
         }
 
-        if (LocalDateTime.now().minusMinutes(15).isBefore(payment.get().getTimestamp())) {
+        Payment payment = paymentOpt.get();
+        if (payment.getAmount().compareTo(new BigDecimal("10000")) > 0) {
+            throw new PaymentValidationException("Payments over $10,000 cannot be stopped automatically. Please contact customer service.");
+        }
+
+        if (LocalDateTime.now().minusMinutes(15).isBefore(payment.getTimestamp())) {
             paymentRepository.deleteById(paymentId);
             return true;
         } else {
-            throw new ResourceNotFoundException("Payment cannot be stopped after 15 minutes.");
+            throw new PaymentValidationException("Payment cannot be stopped after 15 minutes.");
         }
     }
 
